@@ -16,7 +16,7 @@ KutPAM is a powerful and user-friendly package manager for Linux. It manages APT
 ----------------------
 
 # Linux Screenshot
-![Linux(pardus)](screenshot/kutpam_linux.gif)  
+![Linux(pardus)](screenshot/linux_kutpam.gif)  
 
 --------------------
 Install Git Clone and Python3
