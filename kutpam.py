@@ -636,12 +636,14 @@ class RepoManagerDialog(QWidget):
         
         self.add_button = QPushButton("Depo Ekle")
         self.add_button.setIcon(QIcon.fromTheme("list-add"))
+        self.edit_button = QPushButton("Depo Düzenle")
+        self.edit_button.setIcon(QIcon.fromTheme("document-edit"))
         self.remove_button = QPushButton("Depo Kaldır")
         self.remove_button.setIcon(QIcon.fromTheme("list-remove"))
         self.update_button = QPushButton("Tüm Depoları Güncelle")
         self.update_button.setIcon(QIcon.fromTheme("view-refresh"))
         
-        for btn in [self.add_button, self.remove_button, self.update_button]:
+        for btn in [self.add_button, self.edit_button, self.remove_button, self.update_button]:
             button_layout.addWidget(btn)
             
         button_group.setLayout(button_layout)
@@ -669,13 +671,150 @@ class RepoManagerDialog(QWidget):
         
         # Bağlantılar
         self.add_button.clicked.connect(self.add_repo)
+        self.edit_button.clicked.connect(self.edit_repo)
         self.remove_button.clicked.connect(self.remove_repo)
         self.update_button.clicked.connect(self.update_repos)
         
         # Depoları yükle
         self.load_repos()
         self.update_stats()
+
+    def load_repos(self):
+        """sources.list dosyasından depoları yükle"""
+        try:
+            self.repo_list.clear()
+            sources_paths = ["/etc/apt/sources.list"]
+            sources_dir = "/etc/apt/sources.list.d"
+            
+            # sources.list.d dizinindeki .list dosyalarını da ekle
+            if os.path.exists(sources_dir):
+                sources_paths.extend([os.path.join(sources_dir, f) for f in os.listdir(sources_dir) if f.endswith('.list')])
+            
+            for source_path in sources_paths:
+                if os.path.exists(source_path):
+                    with open(source_path, 'r') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line and not line.startswith('#'):
+                                item = QListWidgetItem(line)
+                                item.setData(Qt.UserRole, source_path)  # Dosya yolunu sakla
+                                self.repo_list.addItem(item)
+            
+            self.update_stats()
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Depolar yüklenirken hata oluştu: {str(e)}")
+
+    def add_repo(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Yeni Depo Ekle")
+        layout = QVBoxLayout()
         
+        repo_input = QLineEdit()
+        repo_input.setPlaceholderText("deb http://archive.ubuntu.com/ubuntu jammy main")
+        
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, dialog
+        )
+        
+        layout.addWidget(QLabel("Depo Satırı:"))
+        layout.addWidget(repo_input)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        
+        if dialog.exec_() == QDialog.Accepted:
+            repo_line = repo_input.text().strip()
+            if repo_line:
+                try:
+                    with open("/etc/apt/sources.list", "a") as f:
+                        f.write(f"\n{repo_line}")
+                    self.load_repos()
+                    subprocess.run(["sudo", "apt-get", "update"])
+                except Exception as e:
+                    QMessageBox.critical(self, "Hata", f"Depo eklenirken hata oluştu: {str(e)}")
+
+    def edit_repo(self):
+        current = self.repo_list.currentItem()
+        if not current:
+            return
+            
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Depo Düzenle")
+        layout = QVBoxLayout()
+        
+        repo_input = QLineEdit(current.text())
+        source_path = current.data(Qt.UserRole)
+        
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, dialog
+        )
+        
+        layout.addWidget(QLabel(f"Kaynak Dosya: {source_path}"))
+        layout.addWidget(QLabel("Depo Satırı:"))
+        layout.addWidget(repo_input)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        
+        if dialog.exec_() == QDialog.Accepted:
+            new_line = repo_input.text().strip()
+            if new_line:
+                try:
+                    # Dosyayı oku
+                    with open(source_path, 'r') as f:
+                        lines = f.readlines()
+                    
+                    # Eski satırı bul ve değiştir
+                    for i, line in enumerate(lines):
+                        if line.strip() == current.text():
+                            lines[i] = new_line + '\n'
+                            break
+                    
+                    # Dosyaya geri yaz
+                    with open(source_path, 'w') as f:
+                        f.writelines(lines)
+                    
+                    self.load_repos()
+                    subprocess.run(["sudo", "apt-get", "update"])
+                except Exception as e:
+                    QMessageBox.critical(self, "Hata", f"Depo düzenlenirken hata oluştu: {str(e)}")
+
+    def remove_repo(self):
+        current = self.repo_list.currentItem()
+        if not current:
+            return
+            
+        reply = QMessageBox.question(self, 'Depo Kaldır',
+                                   'Bu depoyu kaldırmak istediğinize emin misiniz?',
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                   
+        if reply == QMessageBox.Yes:
+            try:
+                source_path = current.data(Qt.UserRole)
+                repo_line = current.text()
+                
+                # Dosyayı oku
+                with open(source_path, 'r') as f:
+                    lines = f.readlines()
+                
+                # Depo satırını kaldır
+                lines = [line for line in lines if line.strip() != repo_line]
+                
+                # Dosyaya geri yaz
+                with open(source_path, 'w') as f:
+                    f.writelines(lines)
+                
+                self.load_repos()
+                subprocess.run(["sudo", "apt-get", "update"])
+            except Exception as e:
+                QMessageBox.critical(self, "Hata", f"Depo kaldırılırken hata oluştu: {str(e)}")
+
     def filter_repos(self, text):
         for i in range(self.repo_list.count()):
             item = self.repo_list.item(i)
@@ -696,38 +835,6 @@ class RepoManagerDialog(QWidget):
         except:
             self.last_update_label.setText("Son Güncelleme: Bilinmiyor")
 
-    def load_repos(self):
-        try:
-            result = subprocess.run(["apt-cache", "policy"], capture_output=True, text=True)
-            if result.returncode == 0:
-                repo_set = set()
-                for line in result.stdout.splitlines():
-                    if line.strip().startswith("http"):
-                        repo_set.add(line.strip())
-                self.repo_list.addItems(repo_set)
-        except Exception as e:
-            QMessageBox.critical(self, "Hata", f"Depolar yüklenirken hata oluştu: {str(e)}")
-    
-    def add_repo(self):
-        text, ok = QInputDialog.getText(self, "Yeni Depo Ekle", "Depo URL'si:")
-        if ok and text:
-            try:
-                subprocess.run(["sudo", "add-apt-repository", text], check=True)
-                self.repo_list.addItem(text)
-            except Exception as e:
-                QMessageBox.critical(self, "Hata", f"Depo eklenirken hata oluştu: {str(e)}")
-    
-    def remove_repo(self):
-        selected_items = self.repo_list.selectedItems()
-        if selected_items:
-            for item in selected_items:
-                repo = item.text()
-                try:
-                    subprocess.run(["sudo", "add-apt-repository", "--remove", repo], check=True)
-                    self.repo_list.takeItem(self.repo_list.row(item))
-                except Exception as e:
-                    QMessageBox.critical(self, "Hata", f"Depo kaldırılırken hata oluştu: {str(e)}")
-    
     def update_repos(self):
         try:
             subprocess.run(["sudo", "apt-get", "update"], check=True)
@@ -744,7 +851,7 @@ class MainWindow(QMainWindow):
         self.icon_manager = IconManager()
         self.setStyleSheet(STYLE)
         # Pencere boyutunu sabitle
-        self.setFixedSize(620, 750)  # Genişlik: 800px, Yükseklik: 600px
+        self.setFixedSize(700, 750)  # Genişlik: 800px, Yükseklik: 600px
         self.init_ui()
         self.packages = []  # Bulunan paketleri sakla
         # Search box'a event filter ekle
