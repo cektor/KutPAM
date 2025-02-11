@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: kutpam
+Version: 1.0
+Summary: KutPAM is a powerful and user-friendly package manager for Linux. It manages APT packages easily while keeping Flatpak applications up to date. Inspired by Gokturk culture, it combines modern functionality with a unique design.
+Home-page: https://github.com/cektor/KutPAM
+Author: Fatih Önder
+Author-email: fatih@algyazilim.com

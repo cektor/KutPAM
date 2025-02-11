@@ -1,0 +1,9 @@
+kutpam.desktop
+kutpamlo.png
+setup.py
+kutpam.egg-info/PKG-INFO
+kutpam.egg-info/SOURCES.txt
+kutpam.egg-info/dependency_links.txt
+kutpam.egg-info/entry_points.txt
+kutpam.egg-info/requires.txt
+kutpam.egg-info/top_level.txt

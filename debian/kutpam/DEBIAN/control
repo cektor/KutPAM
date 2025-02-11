@@ -1,0 +1,10 @@
+Package: kutpam
+Version: 1.0
+Architecture: all
+Maintainer: Fatih ÖNDER <fatih@algyazilim.com>
+Installed-Size: 107
+Depends: python3, python3-pyqt5, python3-requests, python3-pil
+Section: utils
+Priority: optional
+Homepage: https://algyazilim.com
+Description: KutPAM is a powerful and user-friendly package manager for Linux. It manages APT packages easily while keeping Flatpak applications up to date. Inspired by Gokturk culture, it combines modern functionality with a unique design.

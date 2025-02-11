@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: kutpam
+Source: https://github.com/cektor/KutPAM
+
+Files: *
+Copyright:Fatih ÖNDER (CekToR) 2025 ALG Yazılım Inc.
+License: GNU
+

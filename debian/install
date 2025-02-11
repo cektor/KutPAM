@@ -1,0 +1,4 @@
+#!/bin/bash
+kutpam.py usr/bin/
+kutpam.desktop usr/share/applications/
+debian/kutpamlo.png /usr/share/icons/hicolor/48x48/apps/

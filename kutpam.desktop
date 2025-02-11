@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=kutpam
+Comment=KutPAM is a powerful and user-friendly package manager for Linux. It manages APT packages easily while keeping Flatpak applications up to date. Inspired by Gokturk culture, it combines modern functionality with a unique design.
+Comment[tr_TR]=KutPAM, Linux için güçlü ve kullanıcı dostu bir paket yöneticisidir. APT paketlerinizi kolayca yönetirken, Flatpak uygulamalarınızı güncel tutar. Göktürk kültüründen ilham alan tasarımı, modern işlevlerle birleşerek benzersiz bir deneyim sunar.
+Exec=sudo -E env XDG_RUNTIME_DIR=/tmp/runtime-root python3 /usr/bin/kutpam.py
+Icon=/usr/share/icons/hicolor/48x48/apps/kutpamlo.png
+Terminal=true
+Categories=Utility;
+
+Name[tr_TR]=KutPAM
+
